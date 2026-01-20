@@ -1,6 +1,6 @@
 {
-  "name": "langchain-soniox",
-  "version": "0.0.3",
+  "name": "@soniox/langchain",
+  "version": "0.1.0",
   "description": "Soniox integration for LangChain.js",
   "type": "module",
   "engines": {
@@ -10,7 +10,7 @@
   "types": "./dist/index.d.ts",
   "repository": {
     "type": "git",
-    "url": "git@github.com:langchain-ai/langchainjs.git"
+    "url": "git@github.com:soniox/langchainjs-soniox.git"
   },
   "scripts": {
     "build": "yarn clean && yarn build:esm && yarn build:cjs && yarn build:scripts",
@@ -30,7 +30,7 @@
     "format": "prettier --write \"src\"",
     "format:check": "prettier --check \"src\""
   },
-  "author": "Soniox",
+  "author": "Soniox Inc.",
   "license": "MIT",
   "dependencies": {
     "@langchain/core": "^0.3.0"
