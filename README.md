@@ -38,9 +38,7 @@ const loader = new SonioxAudioTranscriptLoader(
     audio: audioBuffer, // Or you can pass in a URL string
   },
   {
-    model: "stt-async-v3",
     language_hints: ["en"],
-    enable_speaker_diarization: true,
     // Any other transcription parameters you find here
     // https://soniox.com/docs/stt/api-reference/transcriptions/create_transcription
   },
@@ -60,15 +58,12 @@ const loader = new SonioxAudioTranscriptLoader(
     audio: audioBuffer,
   },
   {
-    model: "stt-async-v3",
     translation: {
       type: "two_way",
       language_a: "en",
       language_b: "es",
     },
     language_hints: ["en", "es"],
-    enable_speaker_diarization: true,
-    enable_language_identification: true,
   },
 );
 
@@ -85,7 +80,6 @@ const loader = new SonioxAudioTranscriptLoader(
     audio: audioBuffer,
   },
   {
-    model: "stt-async-v3",
     translation: {
       type: "one_way",
       target_language: "fr",
@@ -109,7 +103,6 @@ const loader = new SonioxAudioTranscriptLoader(
     audio: audioBuffer,
   },
   {
-    model: "stt-async-v3",
     language_hints: ["en", "es"],
   },
 );
@@ -125,7 +118,6 @@ const loader = new SonioxAudioTranscriptLoader(
     audio: audioBuffer,
   },
   {
-    model: "stt-async-v3",
     context: {
       general: [
         { key: "industry", value: "healthcare" },
