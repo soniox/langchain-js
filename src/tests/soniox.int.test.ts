@@ -28,7 +28,7 @@ describe("SonioxAudioTranscriptLoader", () => {
     const res = await fetch(
       "https://github.com/soniox/soniox_examples/raw/refs/heads/master/speech_to_text/assets/coffee_shop.mp3",
     );
-    const file = await res.bytes();
+    const file = new Uint8Array(await res.arrayBuffer());
 
     const loader = new SonioxAudioTranscriptLoader({
       audio: file,
@@ -54,7 +54,7 @@ describe("SonioxAudioTranscriptLoader", () => {
     const res = await fetch(
       "https://github.com/soniox/soniox_examples/raw/refs/heads/master/speech_to_text/assets/two_way_translation.mp3",
     );
-    const file = await res.bytes();
+    const file = new Uint8Array(await res.arrayBuffer());
 
     const loader = new SonioxAudioTranscriptLoader(
       {

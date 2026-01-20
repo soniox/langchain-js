@@ -1,6 +1,8 @@
+index.cjs
+index.js
+index.d.ts
 node_modules/
 dist/
 .DS_Store
 .vscode
-.yarn
 .env
