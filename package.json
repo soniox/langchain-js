@@ -1,5 +1,5 @@
 {
-  "name": "langchainjs-soniox-template",
+  "name": "langchainjs-soniox",
   "private": true,
   "workspaces": [
     "langchain_soniox"
