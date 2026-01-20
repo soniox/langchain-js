@@ -1,4 +1,4 @@
-# Soniox
+# Soniox LangChain integration
 
 Get started using the [Soniox](https://soniox.com/) audio transcription loader in LangChain.
 
