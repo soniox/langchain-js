@@ -1,4 +1,4 @@
-export class SonioxError extends Error {
+class SonioxError extends Error {
   constructor(
     message: string,
     public code?: string,
