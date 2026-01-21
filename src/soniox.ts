@@ -12,6 +12,11 @@ import {
   SonioxTranscriptionStatusResponse,
   SonioxTranscriptResponse,
 } from "./types/types.js";
+import {
+  SonioxAPIError,
+  SonioxTimeoutError,
+  SonioxValidationError,
+} from "./errors.js";
 
 abstract class SonioxBaseLoader extends BaseDocumentLoader {
   protected readonly API_BASE_URL = "https://api.soniox.com/v1";
@@ -27,13 +32,13 @@ abstract class SonioxBaseLoader extends BaseDocumentLoader {
   ) {
     super();
     if (!sonioxParams) {
-      throw new Error("No Soniox params provided");
+      throw new SonioxValidationError("No Soniox params provided");
     }
     if (!sonioxParams.apiKey) {
       sonioxParams.apiKey = getEnvironmentVariable("SONIOX_API_KEY");
     }
     if (!sonioxParams.apiKey) {
-      throw new Error("No Soniox API key provided");
+      throw new SonioxValidationError("No Soniox API key provided");
     }
     if (!sonioxParams.apiBaseUrl) {
       sonioxParams.apiBaseUrl = this.API_BASE_URL;
@@ -42,7 +47,9 @@ abstract class SonioxBaseLoader extends BaseDocumentLoader {
       sonioxParams.pollingIntervalMs &&
       sonioxParams.pollingIntervalMs < 1000
     ) {
-      throw new Error("Polling interval should be longer than 1000 ms");
+      throw new SonioxValidationError(
+        "Polling interval should be longer than 1000 ms",
+      );
     }
     this.params = sonioxParams;
     this.options = sonioxOptions;
@@ -52,6 +59,29 @@ abstract class SonioxBaseLoader extends BaseDocumentLoader {
     return {
       Authorization: `Bearer ${this.params.apiKey}`,
     };
+  }
+
+  protected async fetch(
+    input: URL | RequestInfo,
+    init?: RequestInit,
+  ): Promise<Response> {
+    if (this.params.fetch) {
+      return this.params.fetch(input, init);
+    } else {
+      return fetch(input, init);
+    }
+  }
+
+  protected async parseJSON<T>(response: Response): Promise<T> {
+    try {
+      return await response.json();
+    } catch (error) {
+      throw new SonioxAPIError(
+        `Failed to parse API response`,
+        response.status,
+        error instanceof Error ? error : undefined,
+      );
+    }
   }
 }
 
@@ -139,57 +169,67 @@ export class SonioxAudioTranscriptLoader extends SonioxBaseLoader {
     audio: Uint8Array,
     audioFormat?: SonioxAudioFormat,
   ): Promise<SonioxFileUploadResponse> {
-    const blob = new Blob([audio as BlobPart]);
+    let res: Response;
 
-    const fileExtension = audioFormat || "wav";
-
-    const mimeTypeMap: Record<string, string> = {
-      aac: "audio/aac",
-      aiff: "audio/aiff",
-      amr: "audio/amr",
-      asf: "video/x-ms-asf",
-      flac: "audio/flac",
-      mp3: "audio/mpeg",
-      ogg: "audio/ogg",
-      wav: "audio/wav",
-      webm: "audio/webm",
-    };
-
-    const mimeType = mimeTypeMap[fileExtension] || "audio/wav";
-
-    const formData = new FormData();
-    formData.append(
-      "file",
-      new File([blob], `audio.${fileExtension}`, {
-        type: mimeType,
-      }),
-    );
-
-    const res = await fetch(`${this.params.apiBaseUrl}/files`, {
-      method: "POST",
-      headers: this.getHeaders(),
-      body: formData,
-    });
-
-    if (!res.ok) {
-      throw new Error(`File upload failed: ${res.statusText}`);
+    if (audio.byteLength === 0) {
+      throw new SonioxValidationError("Audio buffer is empty");
     }
 
-    const file: SonioxFileUploadResponse = await res.json();
-    return file;
+    try {
+      const blob = new Blob([audio as BlobPart]);
+      const fileExtension = audioFormat || "wav";
+      const formData = new FormData();
+      formData.append("file", new File([blob], `audio.${fileExtension}`));
+
+      res = await this.fetch(`${this.params.apiBaseUrl}/files`, {
+        method: "POST",
+        headers: this.getHeaders(),
+        body: formData,
+      });
+    } catch (error) {
+      throw new SonioxAPIError(
+        "File upload failed: network error",
+        undefined,
+        error instanceof Error ? error : new Error(String(error)),
+      );
+    }
+
+    if (!res.ok) {
+      throw new SonioxAPIError(
+        "File upload failed",
+        res.status,
+        new Error(res.statusText),
+      );
+    }
+
+    return await this.parseJSON<SonioxFileUploadResponse>(res);
   }
 
   /**
    * Deletes a file from the Soniox backend.
    */
   private async deleteFile(fileId: string) {
+    let res: Response;
+
     try {
-      await fetch(`${this.params.apiBaseUrl}/files/${fileId}`, {
+      res = await this.fetch(`${this.params.apiBaseUrl}/files/${fileId}`, {
         method: "DELETE",
         headers: this.getHeaders(),
       });
     } catch (error) {
-      throw new Error(`File deletion failed: ${error}`);
+      throw new SonioxAPIError(
+        "File deletion failed: network error",
+        undefined,
+        error instanceof Error ? error : new Error(String(error)),
+      );
+    }
+
+    if (!res.ok) {
+      throw new SonioxAPIError(
+        "File deletion failed",
+        res.status,
+        new Error(res.statusText),
+      );
     }
   }
 
@@ -199,8 +239,10 @@ export class SonioxAudioTranscriptLoader extends SonioxBaseLoader {
   private async createTranscription(
     body: SonioxCreateTranscriptionRequest,
   ): Promise<SonioxCreateTranscriptionResponse> {
+    let res: Response;
+
     try {
-      const res = await fetch(`${this.params.apiBaseUrl}/transcriptions`, {
+      res = await this.fetch(`${this.params.apiBaseUrl}/transcriptions`, {
         method: "POST",
         headers: {
           ...this.getHeaders(),
@@ -208,16 +250,23 @@ export class SonioxAudioTranscriptLoader extends SonioxBaseLoader {
         },
         body: JSON.stringify(body),
       });
-
-      if (!res.ok) {
-        throw new Error(`Transcription creation failed: ${res.statusText}`);
-      }
-
-      const transcription = await res.json();
-      return transcription;
     } catch (error) {
-      throw new Error(`Transcription creation failed: ${error}`);
+      throw new SonioxAPIError(
+        "Transcription creation failed: network error",
+        undefined,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
+
+    if (!res.ok) {
+      throw new SonioxAPIError(
+        "Transcription creation failed",
+        res.status,
+        new Error(res.statusText),
+      );
+    }
+
+    return this.parseJSON<SonioxCreateTranscriptionResponse>(res);
   }
 
   /**
@@ -226,32 +275,43 @@ export class SonioxAudioTranscriptLoader extends SonioxBaseLoader {
   private async getTranscription(
     transcriptionId: string,
   ): Promise<SonioxTranscriptionStatusResponse> {
+    let res: Response;
+
     try {
-      const res = await fetch(
+      res = await this.fetch(
         `${this.params.apiBaseUrl}/transcriptions/${transcriptionId}`,
         {
           method: "GET",
           headers: this.getHeaders(),
         },
       );
-
-      if (!res.ok) {
-        throw new Error(`Transcription query failed: ${res.statusText}`);
-      }
-
-      const status = await res.json();
-      return status;
     } catch (error) {
-      throw new Error(`Transcription query failed: ${error}`);
+      throw new SonioxAPIError(
+        "Transcription query failed: network error",
+        undefined,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
+
+    if (!res.ok) {
+      throw new SonioxAPIError(
+        "Transcription query failed",
+        res.status,
+        new Error(res.statusText),
+      );
+    }
+
+    return await this.parseJSON<SonioxTranscriptionStatusResponse>(res);
   }
 
   /**
    * Deletes the transcription resource from the Soniox backend.
    */
   private async deleteTranscription(transcriptionId: string) {
+    let res: Response;
+
     try {
-      await fetch(
+      res = await this.fetch(
         `${this.params.apiBaseUrl}/transcriptions/${transcriptionId}`,
         {
           method: "DELETE",
@@ -259,7 +319,19 @@ export class SonioxAudioTranscriptLoader extends SonioxBaseLoader {
         },
       );
     } catch (error) {
-      throw new Error(`Transcription deletion failed: ${error}`);
+      throw new SonioxAPIError(
+        "Transcription deletion failed: network error",
+        undefined,
+        error instanceof Error ? error : new Error(String(error)),
+      );
+    }
+
+    if (!res.ok) {
+      throw new SonioxAPIError(
+        "Transcription deletion failed",
+        res.status,
+        new Error(res.statusText),
+      );
     }
   }
 
@@ -270,26 +342,32 @@ export class SonioxAudioTranscriptLoader extends SonioxBaseLoader {
   private async getTranscriptionTranscript(
     transcriptionId: string,
   ): Promise<SonioxTranscriptResponse> {
+    let res: Response;
     try {
-      const res = await fetch(
+      res = await this.fetch(
         `${this.params.apiBaseUrl}/transcriptions/${transcriptionId}/transcript`,
         {
           method: "GET",
           headers: this.getHeaders(),
         },
       );
-
-      if (!res.ok) {
-        throw new Error(
-          `Transcription transcript query failed: ${res.statusText}`,
-        );
-      }
-
-      const status = await res.json();
-      return status;
     } catch (error) {
-      throw new Error(`Transcription transcript query failed: ${error}`);
+      throw new SonioxAPIError(
+        "Transcription transcript query failed: network error",
+        undefined,
+        error instanceof Error ? error : new Error(String(error)),
+      );
     }
+
+    if (!res.ok) {
+      throw new SonioxAPIError(
+        "Transcription transcript query failed",
+        res.status,
+        new Error(res.statusText),
+      );
+    }
+
+    return await this.parseJSON<SonioxTranscriptResponse>(res);
   }
 
   /**
@@ -335,25 +413,19 @@ export class SonioxAudioTranscriptLoader extends SonioxBaseLoader {
       const timeoutMs = this.params.pollingTimeoutMs ?? this.POLLING_TIMEOUT_MS;
       const startTime = Date.now();
 
-      let statusResponse: SonioxTranscriptionStatusResponse | undefined;
-
       while (true) {
         if (Date.now() - startTime > timeoutMs) {
-          throw new Error(
-            `Transcription job polling timed out: ${JSON.stringify(
-              statusResponse,
-            )}`,
-          );
+          throw new SonioxTimeoutError("Transcription job polling timed out");
         }
 
-        statusResponse = await this.getTranscription(transcriptionId);
+        const statusResponse = await this.getTranscription(transcriptionId);
 
         if (statusResponse.status === "completed") {
           break;
         }
 
         if (statusResponse.status === "error") {
-          throw new Error(
+          throw new SonioxAPIError(
             `Transcription failed: ${
               statusResponse.error_message ?? "Unknown error"
             }`,
@@ -363,15 +435,32 @@ export class SonioxAudioTranscriptLoader extends SonioxBaseLoader {
         await new Promise((r) => setTimeout(r, pollingInterval));
       }
 
-      const transcript = await this.getTranscriptionTranscript(transcriptionId);
-      return transcript;
+      return await this.getTranscriptionTranscript(transcriptionId);
     } finally {
+      const cleanupErrors: Error[] = [];
+
       if (fileId) {
-        await this.deleteFile(fileId);
+        try {
+          await this.deleteFile(fileId);
+        } catch (error) {
+          cleanupErrors.push(
+            error instanceof Error ? error : new Error(String(error)),
+          );
+        }
       }
 
       if (transcriptionId) {
-        await this.deleteTranscription(transcriptionId);
+        try {
+          await this.deleteTranscription(transcriptionId);
+        } catch (error) {
+          cleanupErrors.push(
+            error instanceof Error ? error : new Error(String(error)),
+          );
+        }
+      }
+
+      if (cleanupErrors.length > 0) {
+        console.warn("Cleanup errors:", cleanupErrors);
       }
     }
   }

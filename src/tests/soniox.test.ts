@@ -28,7 +28,6 @@ describe("SonioxAudioTranscriptLoader", () => {
       expect(() => {
         new SonioxAudioTranscriptLoader({
           audio: mockAudioData,
-          audioFormat: "wav",
         });
       }).toThrow("No Soniox API key provided");
     });
@@ -38,7 +37,6 @@ describe("SonioxAudioTranscriptLoader", () => {
 
       const loader = new SonioxAudioTranscriptLoader({
         audio: mockAudioData,
-        audioFormat: "wav",
       });
 
       expect(loader).toBeDefined();
@@ -48,7 +46,6 @@ describe("SonioxAudioTranscriptLoader", () => {
       expect(() => {
         new SonioxAudioTranscriptLoader({
           audio: mockAudioData,
-          audioFormat: "wav",
           apiKey: mockApiKey,
           pollingIntervalMs: 500,
         });
@@ -58,7 +55,6 @@ describe("SonioxAudioTranscriptLoader", () => {
     test("should accept valid polling interval", () => {
       const loader = new SonioxAudioTranscriptLoader({
         audio: mockAudioData,
-        audioFormat: "wav",
         apiKey: mockApiKey,
         pollingIntervalMs: 2000,
       });
@@ -69,7 +65,6 @@ describe("SonioxAudioTranscriptLoader", () => {
     test("should accept valid polling timeout", () => {
       const loader = new SonioxAudioTranscriptLoader({
         audio: mockAudioData,
-        audioFormat: "wav",
         apiKey: mockApiKey,
         pollingTimeoutMs: 2 * 60 * 1000,
       });
@@ -136,7 +131,6 @@ describe("SonioxAudioTranscriptLoader", () => {
     test("should successfully transcribe audio", async () => {
       const loader = new SonioxAudioTranscriptLoader({
         audio: mockAudioData,
-        audioFormat: "wav",
         apiKey: mockApiKey,
       });
 
@@ -149,6 +143,15 @@ describe("SonioxAudioTranscriptLoader", () => {
   });
 
   describe("Error handling", () => {
+    test("should handle empty file upload", async () => {
+      const loader = new SonioxAudioTranscriptLoader({
+        audio: new Uint8Array(),
+        apiKey: "invalid-key",
+      });
+
+      await expect(loader.load()).rejects.toThrow("Audio buffer is empty");
+    });
+
     test("should handle file upload failure", async () => {
       (fetch as jest.MockedFunction<typeof fetch>).mockImplementationOnce(() =>
         Promise.resolve({
@@ -159,13 +162,10 @@ describe("SonioxAudioTranscriptLoader", () => {
 
       const loader = new SonioxAudioTranscriptLoader({
         audio: mockAudioData,
-        audioFormat: "wav",
-        apiKey: "invalid-key",
+        apiKey: mockApiKey,
       });
 
-      await expect(loader.load()).rejects.toThrow(
-        "File upload failed: Unauthorized",
-      );
+      await expect(loader.load()).rejects.toThrow("File upload failed");
     });
 
     test("should handle transcription creation failure", async () => {
@@ -196,7 +196,6 @@ describe("SonioxAudioTranscriptLoader", () => {
 
       const loader = new SonioxAudioTranscriptLoader({
         audio: mockAudioData,
-        audioFormat: "wav",
         apiKey: mockApiKey,
       });
 
@@ -255,7 +254,6 @@ describe("SonioxAudioTranscriptLoader", () => {
 
       const loader = new SonioxAudioTranscriptLoader({
         audio: mockAudioData,
-        audioFormat: "wav",
         apiKey: mockApiKey,
       });
 
@@ -294,7 +292,6 @@ describe("SonioxAudioTranscriptLoader", () => {
 
       const loader = new SonioxAudioTranscriptLoader({
         audio: mockAudioData,
-        audioFormat: "wav",
         apiKey: mockApiKey,
         pollingIntervalMs: 1000,
         pollingTimeoutMs: 2000,
@@ -359,7 +356,6 @@ describe("SonioxAudioTranscriptLoader", () => {
 
       const loader = new SonioxAudioTranscriptLoader({
         audio: mockAudioData,
-        audioFormat: "wav",
         apiKey: mockApiKey,
       });
 
@@ -398,7 +394,6 @@ describe("SonioxAudioTranscriptLoader", () => {
 
       const loader = new SonioxAudioTranscriptLoader({
         audio: mockAudioData,
-        audioFormat: "wav",
         apiKey: mockApiKey,
       });
 

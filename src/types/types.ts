@@ -99,6 +99,8 @@ export type SonioxTranscriptResponse = {
   tokens?: SonioxTranscriptToken[] | null;
 };
 
+export type FetchFunction = typeof globalThis.fetch;
+
 export type SonioxLoaderParams = {
   audio: Uint8Array | string;
   audioFormat?: SonioxAudioFormat;
@@ -106,6 +108,7 @@ export type SonioxLoaderParams = {
   apiBaseUrl?: string;
   pollingIntervalMs?: number;
   pollingTimeoutMs?: number;
+  fetch?: FetchFunction;
 };
 
 export type SonioxLoaderOptions = Partial<SonioxTranscriptionOptions>;
