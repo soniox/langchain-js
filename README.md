@@ -12,7 +12,7 @@ npm install @soniox/langchain
 
 ### Credentials
 
-Get your Soniox API key from the [Soniox dashboard](https://console.soniox.com) and set it as an environment variable:
+Get your Soniox API key from the [Soniox console](https://console.soniox.com) and set it as an environment variable:
 
 ```bash
 export SONIOX_API_KEY=your_api_key
