@@ -15,7 +15,7 @@ describe("SonioxAudioTranscriptLoader", () => {
     const docs = await loader.load();
 
     expect(docs.length).toBe(1);
-    expect(docs[0].pageContent).toBeGreaterThan(0);
+    expect(docs[0].pageContent.length).toBeGreaterThan(0);
     expect(docs[0].metadata).toHaveProperty("id");
     expect(docs[0].metadata).toHaveProperty("text");
     expect(docs[0].metadata).toHaveProperty("tokens");
@@ -68,7 +68,7 @@ describe("SonioxAudioTranscriptLoader", () => {
     const docs = await loader.load();
 
     expect(docs.length).toBe(1);
-    expect(docs[0].pageContent).toBeGreaterThan(0);
+    expect(docs[0].pageContent.length).toBeGreaterThan(0);
     expect(docs[0].metadata).toHaveProperty("id");
     expect(docs[0].metadata).toHaveProperty("text");
     expect(docs[0].metadata).toHaveProperty("tokens");
@@ -89,7 +89,7 @@ describe("SonioxAudioTranscriptLoader", () => {
     const docs = await loader.load();
 
     expect(docs.length).toBe(1);
-    expect(docs[0].pageContent).toBeGreaterThan(0);
+    expect(docs[0].pageContent.length).toBeGreaterThan(0);
     expect(docs[0].metadata).toHaveProperty("id");
     expect(docs[0].metadata).toHaveProperty("text");
     expect(docs[0].metadata).toHaveProperty("tokens");
