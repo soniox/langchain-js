@@ -1,4 +1,7 @@
 import { test, expect, describe } from "@jest/globals";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore - undici types don't export fetch but it exists at runtime
+import { fetch as undiciFetch } from "undici";
 import { SonioxAudioTranscriptLoader } from "../soniox.js";
 
 describe("SonioxAudioTranscriptLoader", () => {
@@ -79,5 +82,28 @@ describe("SonioxAudioTranscriptLoader", () => {
     expect(
       docs[0].metadata.tokens?.find((t) => t.translation_status !== null),
     ).toBeTruthy();
+  });
+
+  test("custom fetch", async () => {
+    const loader = new SonioxAudioTranscriptLoader({
+      audio:
+        "https://github.com/soniox/soniox_examples/raw/refs/heads/master/speech_to_text/assets/coffee_shop.mp3",
+      audioFormat: "mp3",
+      fetch: undiciFetch,
+    });
+
+    const docs = await loader.load();
+
+    expect(docs.length).toBe(1);
+    expect(docs[0].pageContent).toContain(
+      "What is your best seller here? Our best seller here is cold brew iced coffee and lattes. Okay. And on a day like today where it's snowing quite a bit, do a lot of people still order iced coffee? Here in Maine, yes. Really? Yes.",
+    );
+    expect(docs[0].metadata).toHaveProperty("id");
+    expect(docs[0].metadata).toHaveProperty("text");
+    expect(docs[0].metadata).toHaveProperty("tokens");
+
+    expect(
+      docs[0].metadata.tokens?.find((t) => t.translation_status !== null),
+    ).not.toBeTruthy();
   });
 });
