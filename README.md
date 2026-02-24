@@ -152,7 +152,7 @@ const loader = new SonioxAudioTranscriptLoader(
 
 | Parameter                        | Type                         | Description                              |
 | -------------------------------- | ---------------------------- | ---------------------------------------- |
-| `model`                          | `SonioxTranscriptionModelId` | Model to use (default: `"stt-async-v3"`) |
+| `model`                          | `SonioxTranscriptionModelId` | Model to use (default: `"stt-async-v4"`) |
 | `translation`                    | `object`                     | Translation configuration                |
 | `language_hints`                 | `string[]`                   | Language hints for transcription         |
 | `language_hints_strict`          | `boolean`                    | Enforce strict language hints            |

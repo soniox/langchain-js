@@ -96,7 +96,7 @@ abstract class SonioxBaseLoader extends BaseDocumentLoader {
  *     audio: audioBuffer, // or URL string
  *   },
  *   {
- *     model: "stt-async-v3",
+ *     model: "stt-async-v4",
  *     language_hints: ["en"],
  *     enable_speaker_diarization: true
  *   }
@@ -113,7 +113,7 @@ abstract class SonioxBaseLoader extends BaseDocumentLoader {
  *     pollingTimeoutMs: 300000
  *   },
  *   {
- *     model: "stt-async-v3",
+ *     model: "stt-async-v4",
  *     translation: { type: "two_way", language_a: "en", language_b: "es" },
  *     language_hints: ["en", "es"],
  *     language_hints_strict: false,
@@ -144,7 +144,7 @@ abstract class SonioxBaseLoader extends BaseDocumentLoader {
  *     audio: audioBuffer, // or URL string
  *   },
  *   {
- *     model: "stt-async-v3",
+ *     model: "stt-async-v4",
  *     translation: { type: "one_way", target_language: "fr" },
  *     language_hints: ["en"],
  *     context: "Medical consultation discussing treatment options"

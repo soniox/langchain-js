@@ -1,4 +1,4 @@
-export type SonioxTranscriptionModelId = "stt-async-v3" | (string & {});
+export type SonioxTranscriptionModelId = "stt-async-v4" | (string & {});
 
 export type SonioxTranslation =
   | {
